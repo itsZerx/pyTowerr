@@ -1,5 +1,5 @@
-# pyTowerr
-pyTowerr - A Python Tower Defence 2D game for Genetic Algorithms &amp; Reinforcement Learning
+## pyTowerr - A Python Tower Defence 2D Game
+#### Applications: Genetic Algorithms &amp; Reinforcement Learning
 *Autor: António Raimundo*
 
 Código-base para a Unidade Curricular (UC)
@@ -25,8 +25,9 @@ Após terminarem a configuração inicial, prossigam para mais uns comandos adic
 ### Comandos iniciais:
 Para garantir que o projeto base inicia sem problemas, devem importar o projeto, e no terminal 
 (garantir que estão localizados na **pasta principal - pyTowerr**)
-executem os seguintes comandos:
-1. ``pip install -r requirements.txt``
+executem o seguinte comando:
+
+``pip install -r requirements.txt``
 
 ### Ficheiro original `genetic_algorithm.py`:
 Se houver necessidade de terem acesso ao código original do ficheiro `algorithms/genetic_algorithm.py`, têm abaixo a configuração base:
