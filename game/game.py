@@ -71,9 +71,9 @@ class Game:
         self.exit_button = Button(settings.SCREEN_WIDTH + 60, settings.SCREEN_HEIGHT - 100, self.exit_image, True)
 
         # GA hyperparameters
-        self.num_generations = 200
-        self.num_genes = 2
-        self.population_size = 20 # Greater than 4
+        self.num_generations = None
+        self.num_genes = None
+        self.population_size = None # Greater than 4
 
         # GA helper variables
         self.generation_number = None
