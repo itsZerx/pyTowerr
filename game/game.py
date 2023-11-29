@@ -25,13 +25,13 @@ class Game:
 
     def __init__(self, clock, screen):
         # game variables
-        self.towers = []  # List of tower objects
         self.restart_button = None
         self.fast_forward_button = None
         self.enemy_group = None
-        self.begin_button = None
+        self.send_wave_button = None
         self.clock = clock
         self.screen = screen
+        self.wave_number_text = 0
         # load images
         self.map_image = pg.image.load('levels/level.png').convert_alpha()
         # enemies
@@ -40,18 +40,13 @@ class Game:
             "warrior": pg.image.load('assets/images/enemies/warrior.png').convert_alpha(),
         }
         # buttons
-        self.buy_tower_image = pg.image.load('assets/images/buttons/buy_turret.png').convert_alpha()
-        self.cancel_image = pg.image.load('assets/images/buttons/cancel.png').convert_alpha()
-        self.upgrade_turret_image = pg.image.load('assets/images/buttons/upgrade_turret.png').convert_alpha()
-        self.begin_image = pg.image.load('assets/images/buttons/begin.png').convert_alpha()
+        self.start_train_image = pg.image.load('assets/images/buttons/start-train.png').convert_alpha()
+        self.send_wave_image = pg.image.load('assets/images/buttons/send-wave.png').convert_alpha()
         self.restart_image = pg.image.load('assets/images/buttons/restart.png').convert_alpha()
         self.fast_forward_image = pg.image.load('assets/images/buttons/fast_forward.png').convert_alpha()
-        # gui
-        self.heart_image = pg.image.load("assets/images/gui/heart.png").convert_alpha()
-        self.coin_image = pg.image.load("assets/images/gui/coin.png").convert_alpha()
-        self.logo_image = pg.image.load("assets/images/gui/logo.png").convert_alpha()
+        self.exit_image = pg.image.load('assets/images/buttons/exit-game.png').convert_alpha()
 
-        # load json data for level
+        # load json data for wave_number
         with open('levels/level.tmj') as file:
             self.world_data = json.load(file)
 
@@ -68,17 +63,26 @@ class Game:
         self.enemy_group = pg.sprite.Group()
 
         # create buttons
-        self.tower_button = Button(settings.SCREEN_WIDTH + 30, 120, self.buy_tower_image, True)
-        self.cancel_button = Button(settings.SCREEN_WIDTH + 50, 180, self.cancel_image, True)
-        self.upgrade_button = Button(settings.SCREEN_WIDTH + 5, 180, self.upgrade_turret_image, True)
-        self.begin_button = Button(settings.SCREEN_WIDTH + 60, 300, self.begin_image, True)
+        self.start_train_button = Button(settings.SCREEN_WIDTH + 60, 250, self.start_train_image, True)
+        self.send_wave_button = Button(settings.SCREEN_WIDTH + 60, 325, self.send_wave_image, True)
         self.restart_button = Button(310, 300, self.restart_image, True)
-        self.fast_forward_button = Button(settings.SCREEN_WIDTH + 50, 300, self.fast_forward_image, False)
+        self.fast_forward_button = Button(settings.SCREEN_WIDTH + 55, 400, self.fast_forward_image, False)
+        self.restart_button_2 = Button(settings.SCREEN_WIDTH + 45, 475, self.restart_image, True)
+        self.exit_button = Button(settings.SCREEN_WIDTH + 60, settings.SCREEN_HEIGHT - 100, self.exit_image, True)
 
-        # GA variables
+        # GA hyperparameters
+        self.num_generations = 200
+        self.num_genes = 2
+        self.population_size = 20 # Greater than 4
+
+        # GA helper variables
+        self.generation_number = None
+        self.ga_instance = None
         self.ga_thread = None
-        self.ga_running = False
+        self.ga_running = None
         self.best_solution = None
+        self.best_solution_fitness = 0.0
+        self.ga_train_button_active = True
 
     # function for outputting text onto the screen
     def draw_text(self, text, font, text_col, x, y):
@@ -87,80 +91,118 @@ class Game:
 
     def display_data(self):
         # draw panel
-        pg.draw.rect(self.screen, "maroon", (settings.SCREEN_WIDTH, 0, settings.SIDE_PANEL, settings.SCREEN_HEIGHT))
-        pg.draw.rect(self.screen, "grey0", (settings.SCREEN_WIDTH, 0, settings.SIDE_PANEL, 400), 2)
-        self.screen.blit(self.logo_image, (settings.SCREEN_WIDTH, 400))
+        pg.draw.rect(self.screen, "midnightblue",
+                     (settings.SCREEN_WIDTH, 0, settings.SIDE_PANEL, settings.SCREEN_HEIGHT))
+        pg.draw.rect(self.screen, "grey100", (settings.SCREEN_WIDTH, 0, settings.SIDE_PANEL, settings.SCREEN_HEIGHT), 2)
         # display data
-        self.draw_text("LEVEL: " + str(self.world.level), self.text_font, "grey100", settings.SCREEN_WIDTH + 10, 10)
-        self.screen.blit(self.heart_image, (settings.SCREEN_WIDTH + 10, 35))
-        self.draw_text(str(self.world.health), self.text_font, "grey100", settings.SCREEN_WIDTH + 50, 40)
-        self.screen.blit(self.coin_image, (settings.SCREEN_WIDTH + 10, 65))
+        self.draw_text(("Generation: " + str(self.generation_number)), self.text_font, "grey100",
+                       settings.SCREEN_WIDTH + 10, 10)
+        self.draw_text("Fitness: " + str(round(self.best_solution_fitness, 3)), self.text_font, "grey100",
+                       settings.SCREEN_WIDTH + 10, 40)
+        self.draw_text("Wave: " + str(self.wave_number_text), self.text_font, "grey100", settings.SCREEN_WIDTH + 10,
+                       70)
+        self.draw_text("Enemies killed: " + str(self.world.killed_enemies), self.text_font, "grey100",
+                       settings.SCREEN_WIDTH + 10, 100)
+        self.draw_text("Enemies escaped: " + str(self.world.missed_enemies), self.text_font, "grey100",
+                       settings.SCREEN_WIDTH + 10, 130)
+        self.draw_text("Health: " + str(self.world.health), self.text_font, "grey100",
+                       settings.SCREEN_WIDTH + 10, 160)
+
+    def reset_game(self):
+        self.game_over = False
+        self.level_started = False
+        self.ga_train_button_active = True
+        self.wave_number_text = 0
+        self.last_enemy_spawn = pg.time.get_ticks()
+        self.world = World(self.world_data, self.map_image)
+        self.world.process_data()
+        self.world.process_enemies()
+        self.enemy_group.empty()
 
     def run_ga_in_thread(self):
         if self.ga_thread and self.ga_thread.is_alive():
             return  # GA is already running
-
         self.ga_running = True
         self.ga_thread = threading.Thread(target=self.run_ga)
         self.ga_thread.start()
 
     def run_ga(self):
-        ga = GeneticAlgorithm()
-        ga.run()
-        self.best_solution, _ = ga.get_best_solution()
+        self.ga_instance = GeneticAlgorithm(
+            num_generations=self.num_generations,
+            num_genes=self.num_genes,
+            population_size=self.population_size
+        )
+        self.ga_instance.run()
         self.ga_running = False
+        self.best_solution, self.best_solution_fitness = self.ga_instance.get_best_solution()
+        print("Best Accuracy:", round(self.best_solution[0], 3), ", Best Cooldown: ", self.best_solution[1])
+        self.update_tower_strategies(self.best_solution)
 
-    def update_tower_strategies(self, solution):
-        for tower in self.towers:
-            tower.update_strategy(solution)
-        self.best_solution = None
+    def update_tower_strategies(self, best_solution):
+        best_accuracy, best_cooldown = best_solution
+        self.generation_number = self.ga_instance.get_current_generation()
+        # Update the strategy parameters for each tower
+        for tower in self.world.towers:
+            tower.accuracy = best_accuracy
+            tower.cooldown = best_cooldown
+            tower.update_strategy_params()
 
     def run(self):
         run = True
         while run:
             self.clock.tick(settings.FPS)
+
             if not self.game_over:
                 # check if player has lost
                 if self.world.health <= 0:
                     self.game_over = True
-                    self.game_outcome = -1  # loss
+                    self.game_outcome = -1  # lose
                 # check if player has won
-                if self.world.level > settings.TOTAL_WAVES:
+                if self.world.wave_number > settings.TOTAL_WAVES:
                     self.game_over = True
                     self.game_outcome = 1  # win
 
                 # update groups
                 self.enemy_group.update(self.world)
-                self.world.tower_group.update(self.enemy_group, self.world)
+                # self.world.tower_group.update(self.enemy_group, self.world)
+                current_time = pg.time.get_ticks()
+                for tower in self.world.tower_group:
+                    tower.update(self.enemy_group, current_time, self.world)
 
-            # draw level
-            self.world.draw(self.screen)
+                # draw world
+                self.world.draw(self.screen)
 
-            # draw groups
-            self.enemy_group.draw(self.screen)
-            for tower in self.world.tower_group:
-                tower.draw(self.screen)
+                # draw groups
+                self.enemy_group.draw(self.screen)
+                for tower in self.world.tower_group:
+                    tower.draw(self.screen)
 
-            # Update towers with the latest GA solution if available
-            if self.best_solution:
-                self.update_tower_strategies(self.best_solution)
+                # display info
+                self.display_data()
 
-            # display info
-            self.display_data()
+                # exit game
+                if self.exit_button.draw(self.screen):
+                    run = False
 
-            if not self.game_over:
-                # check if the level has been started or not
-                if not self.level_started:
-                    if self.begin_button.draw(self.screen):
-                        self.level_started = True
-                        # Run GA in a separate thread
-                        if not self.ga_running:
+                if not self.game_over:
+                    # Run GA in a separate thread
+                    if not self.ga_running and self.ga_train_button_active:
+                        if self.start_train_button.draw(self.screen):
                             self.run_ga_in_thread()
+
+                # check if the wave_number has been started or not
+                if not self.level_started:
+                    if self.send_wave_button.draw(self.screen) or pg.key.get_pressed()[pg.K_SPACE]:
+                        self.level_started = True
+                        self.wave_number_text += 1
+                        self.ga_train_button_active = False
                 else:
                     # fast-forward option
                     self.world.game_speed = 1
                     if self.fast_forward_button.draw(self.screen):
-                        self.world.game_speed = 2
+                        self.world.game_speed = 5
+                    if self.restart_button_2.draw(self.screen):
+                        self.reset_game()
                     # spawn enemies
                     if pg.time.get_ticks() - self.last_enemy_spawn > settings.SPAWN_COOLDOWN:
                         if self.world.spawned_enemies < len(self.world.enemy_list):
@@ -175,29 +217,24 @@ class Game:
 
                 # check if the wave is finished
                 if self.world.check_level_complete():
-                    self.world.level += 1
+                    self.world.wave_number += 1
                     self.level_started = False
                     self.last_enemy_spawn = pg.time.get_ticks()
                     self.world.reset_level()
-                    self.world.process_enemies()
-
+                    if self.world.wave_number < settings.TOTAL_WAVES:
+                        self.world.process_enemies()
+                    else:
+                        self.game_over = True
+                        self.game_outcome = 1  # win
             else:
                 pg.draw.rect(self.screen, "dodgerblue", (200, 200, 400, 200), border_radius=30)
                 if self.game_outcome == -1:
                     self.draw_text("GAME OVER", self.large_font, "grey0", 310, 230)
                 elif self.game_outcome == 1:
                     self.draw_text("YOU WIN!", self.large_font, "grey0", 315, 230)
-                # restart level
+                # restart game
                 if self.restart_button.draw(self.screen):
-                    self.game_over = False
-                    self.level_started = False
-                    self.last_enemy_spawn = pg.time.get_ticks()
-                    self.world = World(self.world_data, self.map_image)
-                    self.world.process_data()
-                    self.world.process_enemies()
-                    # empty groups
-                    self.enemy_group.empty()
-                    self.world.tower_group.empty()
+                    self.reset_game()
 
             # event handler
             for event in pg.event.get():

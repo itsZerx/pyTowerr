@@ -23,31 +23,31 @@ GAME_MODE = "MANUAL"  # MANUAL, GENETIC_ALGORITHM, QLEARNING
 SPAWN_COOLDOWN = 400
 ENEMY_TYPES = {
     "zombie": {
-        "health": 6,
+        "health": 10,
         "speed": 2,
         "image": pg.image.load('assets/images/enemies/zombie.png'),
     },
     "warrior": {
-        "health": 10,
-        "speed": 4,
+        "health": 20,
+        "speed": 3,
         "image": pg.image.load('assets/images/enemies/warrior.png'),
     },
 }
 ENEMY_SPAWN_DATA = [
     {
         # Wave 1
-        "zombie": 5,
+        "zombie": 10,
         "warrior": 0,
     },
     {
         # Wave 2
-        "zombie": 7,
-        "warrior": 3,
+        "zombie": 15,
+        "warrior": 5,
     },
     {
         # Wave 3
-        "zombie": 15,
-        "warrior": 5,
+        "zombie": 25,
+        "warrior": 15,
     }
 ]
 
@@ -56,50 +56,56 @@ TOWER_LEVELS = 2
 TOWER_TYPES = {
     "cannon1": {
         "range": 90,
-        "cooldown": 1500,
+        "cooldown": 2000,
         "damage": 2,
         "image": pg.image.load('assets/images/towers/cannon1.png'),
     },
     "cannon2": {
         "range": 120,
-        "cooldown": 1200,
+        "cooldown": 2000,
         "damage": 5,
         "image": pg.image.load('assets/images/towers/cannon2.png'),
     },
 }
 TOWER_POSITIONS = [
     {
+        "id": 0,
+        "type": "cannon1",
+        "x": 11,
+        "y": 2,
+        "angle": -90
+    },
+    {
+        "id": 1,
         "type": "cannon1",
         "x": 5,
         "y": 3,
         "angle": 90
     },
     {
-        "type": "cannon2",
-        "x": 11,
-        "y": 2,
-        "angle": -90
-    },
-    {
+        "id": 2,
         "type": "cannon1",
         "x": 3,
         "y": 8,
         "angle": -90
     },
     {
-        "type": "cannon2",
+        "id": 3,
+        "type": "cannon1",
         "x": 6,
         "y": 7,
         "angle": 90
     },
     {
+        "id": 4,
         "type": "cannon1",
         "x": 12,
         "y": 11,
         "angle": -90
     },
     {
-        "type": "cannon2",
+        "id": 5,
+        "type": "cannon1",
         "x": 6,
         "y": 11,
         "angle": -90

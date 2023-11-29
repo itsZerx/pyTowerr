@@ -6,11 +6,12 @@ from towers.tower import Tower
 
 class World:
     def __init__(self, data, map_image):
-        self.level = 1
+        self.wave_number = 0
         self.game_speed = 1
+        self.towers = []
         self.tower_group = pg.sprite.Group()
-        self.health = settings.HEALTH
         self.tile_map = []
+        self.health = 5
         self.waypoints = []
         self.level_data = data
         self.image = map_image
@@ -36,15 +37,17 @@ class World:
         # Process initial towers
         for tower_data in settings.TOWER_POSITIONS:
             # Extract tower data
+            tower_id = tower_data["id"]
             tower_type = tower_data["type"]
             tile_x = tower_data["x"]
             tile_y = tower_data["y"]
             angle = tower_data["angle"]
             # Create tower instances
-            self.create_towers(tower_type, tile_x, tile_y, angle)
+            self.create_towers(tower_id, tower_type, tile_x, tile_y, angle)
 
-    def create_towers(self, tower_type, tile_x, tile_y, angle):
-        new_tower = Tower(tower_type, self.tower_spritesheets, tile_x, tile_y, angle)
+    def create_towers(self, tower_id, tower_type, tile_x, tile_y, angle):
+        new_tower = Tower(tower_id, tower_type, self.tower_spritesheets, tile_x, tile_y, angle)
+        self.towers.append(new_tower)
         self.tower_group.add(new_tower)  # Add to a group or list of towers
 
     def process_waypoints(self, data):
@@ -55,7 +58,7 @@ class World:
             self.waypoints.append((temp_x, temp_y))
 
     def process_enemies(self):
-        enemies = settings.ENEMY_SPAWN_DATA[self.level - 1]
+        enemies = settings.ENEMY_SPAWN_DATA[self.wave_number]
         for enemy_type in enemies:
             enemies_to_spawn = enemies[enemy_type]
             for enemy in range(enemies_to_spawn):
@@ -68,11 +71,8 @@ class World:
             return True
 
     def reset_level(self):
-        # reset enemy variables
+        # reset enemy list
         self.enemy_list = []
-        self.spawned_enemies = 0
-        self.killed_enemies = 0
-        self.missed_enemies = 0
 
     def draw(self, surface):
         surface.blit(self.image, (0, 0))
