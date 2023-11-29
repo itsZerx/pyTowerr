@@ -71,9 +71,9 @@ class Game:
         self.exit_button = Button(settings.SCREEN_WIDTH + 60, settings.SCREEN_HEIGHT - 100, self.exit_image, True)
 
         # GA hyperparameters
-        self.num_generations = None
-        self.num_genes = None
-        self.population_size = None # Greater than 4
+        # self.num_generations = None
+        # self.num_genes = None
+        # self.population_size = None
 
         # GA helper variables
         self.generation_number = None
@@ -127,11 +127,7 @@ class Game:
         self.ga_thread.start()
 
     def run_ga(self):
-        self.ga_instance = GeneticAlgorithm(
-            num_generations=self.num_generations,
-            num_genes=self.num_genes,
-            population_size=self.population_size
-        )
+        self.ga_instance = GeneticAlgorithm()
         self.ga_instance.run()
         self.ga_running = False
         self.best_solution, self.best_solution_fitness = self.ga_instance.get_best_solution()

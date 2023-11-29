@@ -2,10 +2,10 @@ import random
 
 
 class GeneticAlgorithm:
-    def __init__(self, num_generations, num_genes, population_size):
-        self.num_generations = num_generations
-        self.num_genes = num_genes
-        self.population_size = population_size
+    def __init__(self):
+        self.num_generations = None
+        self.num_genes = None
+        self.population_size = None
         self.population = 0
         self.current_generation = 0
 
