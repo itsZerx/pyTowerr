@@ -127,21 +127,27 @@ class Game:
         self.ga_thread.start()
 
     def run_ga(self):
-        self.ga_instance = GeneticAlgorithm()
+        # Assuming a way to determine the tower type (typically from world.towers)
+        first_tower_type = self.world.towers[0].tower_type
+        self.ga_instance = GeneticAlgorithm(first_tower_type)
         self.ga_instance.run()
         self.ga_running = False
-        self.best_solution, self.best_solution_fitness = self.ga_instance.get_best_solution()
-        print("Best Accuracy:", round(self.best_solution[0], 3), ", Best Cooldown: ", self.best_solution[1])
-        self.update_tower_strategies(self.best_solution)
+        top_solutions, top_fitnesses = self.ga_instance.get_best_solution(5)  # Retrieve top 5 solutions
+        # Update total fitness score for all towers
+        self.best_solution_fitness = sum(top_fitnesses) / len(top_fitnesses)
+        # Print the top solutions and their fitness scores
+        for i, solution in enumerate(top_solutions):
+            print(f"Tower #{i + 1}: Best Accuracy: {solution[0]}, Best Cooldown: {solution[1]}, "
+                  f"Best Range: {solution[2]}, Best Firepower: {solution[3]}, Fitness score: {top_fitnesses[i]}")
+        # Update the tower strategies with the top solutions
+        self.update_tower_strategies(top_solutions)
 
-    def update_tower_strategies(self, best_solution):
-        best_accuracy, best_cooldown = best_solution
+    def update_tower_strategies(self, top_solutions):
         self.generation_number = self.ga_instance.get_current_generation()
         # Update the strategy parameters for each tower
-        for tower in self.world.towers:
-            tower.accuracy = best_accuracy
-            tower.cooldown = best_cooldown
-            tower.update_strategy_params()
+        for i, tower in enumerate(self.world.towers):
+            best_solution = top_solutions[i % len(top_solutions)]
+            tower.update_strategy_params(best_solution)
 
     def run(self):
         run = True

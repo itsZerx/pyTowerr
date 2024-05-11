@@ -17,6 +17,15 @@ class Tower(pg.sprite.Sprite):
         self.target = None
         self.is_shooting = False
 
+        # Initialize default tower stats with the 'worst' values from settings
+        self.accuracy = 0.01  # Worst accuracy is the lowest value
+        _, cooldown_max = settings.TOWER_TYPES[tower_type]['cooldown']
+        self.cooldown = cooldown_max  # Worst cooldown is the highest value
+        range_min, _ = settings.TOWER_TYPES[tower_type]['range']
+        self.range = range_min  # Worst range is the smallest value
+        damage_min, _ = settings.TOWER_TYPES[tower_type]['damage']
+        self.damage = damage_min  # Worst damage is the smallest value
+
         # position variables
         self.tile_x = tile_x
         self.tile_y = tile_y
@@ -51,15 +60,24 @@ class Tower(pg.sprite.Sprite):
         self.range_rect.center = self.rect.center
 
         # Params for Genetic Algorithm
-        self.accuracy = 0.0
-        self.cooldown = settings.TOWER_TYPES[tower_type]['cooldown']
-        self.strategy_params = {"accuracy": self.accuracy, "cooldown": self.cooldown}
+        self.strategy_params = {
+            "accuracy": self.accuracy,
+            "cooldown": self.cooldown,
+            "range": self.range,
+            "damage": self.damage
+        }
 
-    def update_strategy_params(self ):
-        self.strategy_params["accuracy"] = self.accuracy
-        self.strategy_params["cooldown"] = self.cooldown
+    def update_strategy_params(self, best_solution):
+        self.accuracy, self.cooldown, self.range, self.damage = best_solution
+        self.strategy_params = {
+            "accuracy": self.accuracy,
+            "cooldown": self.cooldown,
+            "range": self.range,
+            "damage": self.damage
+        }
 
-    def load_images(self, sprite_sheet):
+    @staticmethod
+    def load_images(sprite_sheet):
         # extract images from spritesheet
         size = sprite_sheet.get_height()
         animation_list = []
@@ -95,17 +113,17 @@ class Tower(pg.sprite.Sprite):
 
     def shoot(self, current_time):
         if self.target and current_time - self.last_shot_time >= self.strategy_params["cooldown"]:
-            # Calculate the angle towards the target and play the shooting animation
             self.angle = self.calculate_angle(self.target)
             self.last_shot_time = current_time
             self.is_shooting = True
 
             # Check for hit success
-            if self.is_hit_successful() and self.strategy_params is not None:
-                self.target.health -= settings.TOWER_TYPES.get(self.tower_type).get("damage")
+            if self.is_hit_successful():
+                self.target.health -= self.strategy_params['damage']
                 print(
-                    f"Tower {self.tower_id} # Hit enemy at {self.target.pos}. "
-                    f"Accuracy: {round(self.strategy_params['accuracy'], 3)}")
+                    f"Tower {self.tower_id} # Hit enemy at position {self.target.pos}. "
+                    f"Accuracy: {round(self.strategy_params['accuracy'], 3)}, "
+                    f"Damage: {self.strategy_params['damage']}")
                 self.shot_fx.play()
             else:
                 print(f"Tower {self.tower_id} # Missed shot")
@@ -122,7 +140,6 @@ class Tower(pg.sprite.Sprite):
             self.shoot(current_time)
             self.play_animation(current_time)
         else:
-            # search for new target once turret has cooled down
             if pg.time.get_ticks() - self.last_shot > (self.cooldown / world.game_speed):
                 self.pick_target(enemy_group)
 
