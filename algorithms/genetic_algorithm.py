@@ -20,6 +20,7 @@ class GeneticAlgorithm:
         cooldown_min, cooldown_max = settings.TOWER_TYPES[self.tower_type]['cooldown']
         damage_min, damage_max = settings.TOWER_TYPES[self.tower_type]['damage']
         first_population = []
+
         # For demonstration purposes, we will initialize the population with the worst possible values
         for i in range(self.population_size):
             first_population.append([0.01, cooldown_max, range_min, damage_min])

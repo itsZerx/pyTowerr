@@ -52,9 +52,9 @@ ENEMY_SPAWN_DATA = [
 TOWER_LEVELS = 2
 TOWER_TYPES = {
     "cannon1": {
-        "range": [70, 90],
-        "cooldown": [200, 2000],
-        "damage": [1, 2],
+        "range": [50, 100],
+        "cooldown": [100, 4000],
+        "damage": [1, 3],
         "image": pg.image.load('assets/images/towers/cannon1.png'),
     },
     "cannon2": {

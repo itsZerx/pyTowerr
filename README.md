@@ -13,7 +13,7 @@ próximo passo.
 ### Configuração inicial
 Têm de garantir que possuem os seguintes requisitos para poderem importar corretamente
 o projeto-base para o vosso IDE (Visual Studio Code / PyCharm):
-1. Ter a versão Python 3.10 ou superior instalada nas vossas máquinas.
+1. Ter a versão Python 3.11 ou superior instalada nas vossas máquinas.
 2. Criar um ambiente virtual específico para este projeto. Para tal,
 executem algumas operações:
    1. Atualizem a versão do Python Package Manager (pip): ``pip install --upgrade pip``;
