@@ -61,8 +61,8 @@ class GeneticAlgorithm:
     def get_best_solution(self, num_solutions=1):
         """
         Get the best solution(s) from the final generation
-        :param num_solutions: int, the number of best solutions to return (default is 1). Use 5 for the final solution
-        :return: list of lists, the best solution(s) from the final generation. It should return 5 solutions for the 5 towers
+        :param num_solutions: int, the number of best solutions to return (default is 1). Use 6 for the final solution
+        :return: list of lists, the best solution(s) from the final generation. It should return 6 solutions for the 6 towers
         """
         pass
 

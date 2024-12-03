@@ -132,7 +132,7 @@ class Game:
         self.ga_instance = GeneticAlgorithm(first_tower_type)
         self.ga_instance.run()
         self.ga_running = False
-        top_solutions, top_fitnesses = self.ga_instance.get_best_solution(5)  # Retrieve top 5 solutions
+        top_solutions, top_fitnesses = self.ga_instance.get_best_solution(6)  # Retrieve top 6 solutions
         # Update total fitness score for all towers
         self.best_solution_fitness = sum(top_fitnesses) / len(top_fitnesses)
         # Print the top solutions and their fitness scores
